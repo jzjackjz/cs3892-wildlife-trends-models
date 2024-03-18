@@ -18,7 +18,10 @@
     - Unit: celsius
     - Copernicus Climate Change Service (2024) – with major processing by Our World in Data. “Annual temperature anomalies” [dataset]. Copernicus Climate Change Service, “ERA5 monthly averaged data on single levels from 1940 to present 2” [original data]. Retrieved March 17, 2024 from https://ourworldindata.org/grapher/annual-temperature-anomalies
     - https://ourworldindata.org/grapher/annual-temperature-anomalies
-
+- Countries with an allocation from the national budget to manage the threat of invasive alien species
+    - Unit: 1 = YES, 0 = NO
+    - Data from multiple sources compiled by the UN – processed by Our World in Data. “15.8.1 - Countries with an allocation from the national budget to manage the threat of invasive alien species (1 = YES, 0 = NO) - ER_IAS_NATBUD” [dataset]. Data from multiple sources compiled by the UN [original data].
+    - https://ourworldindata.org/grapher/budget-to-manage-invasive-alien-species
 
 ## Target Variable
 - Global living planet index
