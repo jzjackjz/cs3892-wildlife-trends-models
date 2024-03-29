@@ -11,5 +11,7 @@ pillow
 pycountry_convert
 tensorflow
 torch
+torch_utils
+torchvision
 scikit-learn
 scikit-image
