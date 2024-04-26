@@ -9,9 +9,12 @@ class MergeFeatures(object):
         self.forest_df = forest_df
         self.land_df = land_df
         self.temp_df = temp_df
+        self.entities = ['Africa', 'Asia and Pacific', 'Europe and Central Asia', 'Latin America and the Caribbean', 'North America', 'Freshwater', 'World']
 
     @staticmethod
     def map_country_to_continent(entity):
+        # Your existing mapping logic...
+        # Return a single continent or region for simplicity in this context
         try:
             country_code = pc.country_name_to_country_alpha2(entity)
             continent_code = pc.country_alpha2_to_continent_code(country_code)
@@ -25,63 +28,38 @@ class MergeFeatures(object):
                 'Oceania': 'Asia and Pacific',
                 'Antarctica': 'World'
             }
-            mapped_continent = custom_mapping.get(continent_name, continent_name)
-            return [mapped_continent, 'World'] if mapped_continent != 'World' else ['World']
+            return custom_mapping.get(continent_name)
         except:
             return None
-    
+
+    def expand_co2_to_entities(self):
+        # Create a copy of the CO2 dataframe for each entity
+        co2_expanded_list = []
+        for entity in self.entities:
+            temp_co2 = self.co2_df.copy()
+            temp_co2['Entity'] = entity
+            co2_expanded_list.append(temp_co2)
+        return pd.concat(co2_expanded_list)
+
+    def process_dataframe(self, df):
+        # Apply continent mapping and expand rows for each entity
+        df['Entity'] = df['Entity'].apply(MergeFeatures.map_country_to_continent)
+        return df
+
     def merge(self):
-        self.co2_df['Entity'] = 'World'
+        co2_expanded = self.expand_co2_to_entities()
 
-        # merge forest area
-        self.forest_df['Custom Continent'] = self.forest_df['Entity'].apply(MergeFeatures.map_country_to_continent)
-        expanded_rows = []
-        for _, row in self.forest_df.iterrows():
-            categories = row['Custom Continent']
-            if categories:
-                for category in categories:
-                    expanded_row = row.to_dict()
-                    expanded_row['Custom Continent'] = category
-                    expanded_rows.append(expanded_row)
+        # Process forest, land, and temperature dataframes
+        forest_processed = self.process_dataframe(self.forest_df)
+        land_processed = self.process_dataframe(self.land_df)
+        temp_processed = self.process_dataframe(self.temp_df)
 
-        expanded_forest_df = pd.DataFrame(expanded_rows)
-        forest_continent_aggregated = expanded_forest_df.groupby(['Custom Continent', 'Year'])['Forest area'].sum().reset_index()
-        merged_df = pd.merge(self.co2_df, forest_continent_aggregated, left_on=['Entity', 'Year'], right_on=['Custom Continent', 'Year'], how='inner')
-        merged_df = merged_df.drop(columns=['Custom Continent'])
+        # Start merging
+        merged_df = co2_expanded
+        for df in [forest_processed, land_processed, temp_processed]:
+            merged_df = pd.merge(merged_df, df, on=['Entity', 'Year'], how='outer')
 
-        # merge land use
-        self.land_df['Custom Continent'] = self.land_df['Entity'].apply(MergeFeatures.map_country_to_continent)
-        expanded_rows = []
-        for _, row in self.land_df.iterrows():
-            categories = row['Custom Continent']
-            if categories:
-                for category in categories:
-                    expanded_row = row.to_dict()
-                    expanded_row['Custom Continent'] = category
-                    expanded_rows.append(expanded_row)
+        # Fill NaN values that might have been introduced during the merge
+        merged_df = merged_df.fillna(method='ffill').fillna(method='bfill')
 
-        expanded_land_df = pd.DataFrame(expanded_rows)
-        land_continent_aggregated = expanded_land_df.groupby(['Custom Continent', 'Year']).agg({
-            'Land use: Built-up area': 'sum',
-            'Land use: Grazingland': 'sum',
-            'Land use: Cropland': 'sum'
-        }).reset_index()
-        merged_df = pd.merge(merged_df, land_continent_aggregated, left_on=['Entity', 'Year'], right_on=['Custom Continent', 'Year'], how='inner').drop(columns=['Custom Continent'])
-
-        # merge temperature anomaly
-        self.temp_df['Custom Continent'] = self.temp_df['Entity'].apply(MergeFeatures.map_country_to_continent)
-        expanded_rows = []
-        for _, row in self.temp_df.iterrows():
-            categories = row['Custom Continent']
-            if categories:
-                for category in categories:
-                    expanded_row = row.to_dict()
-                    expanded_row['Custom Continent'] = category
-                    expanded_rows.append(expanded_row)
-
-        expanded_temp_df = pd.DataFrame(expanded_rows)
-        temp_continent_aggregated = expanded_temp_df.groupby(['Custom Continent', 'Year'])['Temperature anomaly'].mean().reset_index()
-        merged_df = pd.merge(merged_df, temp_continent_aggregated, left_on=['Entity', 'Year'], right_on=['Custom Continent', 'Year'], how='inner')
-        merged_df = merged_df.drop(columns=['Custom Continent'])
-        
         return merged_df
