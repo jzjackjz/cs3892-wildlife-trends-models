@@ -13,4 +13,4 @@ Our project was bulit with the following languages and frameworks:
 * numpy, PyTorch, pandas, sklearn, matplotlib
 
 ### Poster
-<img width="840" alt="Screenshot 2024-04-30 at 1 15 50 PM" src="https://github.com/jzjackjz/wildlife-trends-models/assets/72879967/ab5f25f3-2688-4a3e-8555-d27c682813d8">
+<img width="1105" alt="Screenshot 2024-04-30 at 1 17 02 PM" src="https://github.com/jzjackjz/wildlife-trends-models/assets/72879967/2a0b1d4a-e088-4eeb-ba7f-43d813d834f5">
